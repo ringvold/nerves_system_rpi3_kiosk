@@ -14,10 +14,11 @@ kernel=zImage
 # Disable the boot rainbow
 disable_splash=1
 
-# This, along with the Raspberry Pi "x" firmware is needed for the camera
-# to work. The Raspberry Pi "x" firmware is selected via the Buildroot
-# configuration. See Target packages->Hardware handling->Firmware.
-gpu_mem=192
+# Memory reserved for the VideoCore firmware. With the KMS driver below, 3D
+# and display memory come from Linux's CMA pool instead, so this only needs to
+# cover the firmware camera/codec paths. The RPi 3 only has 1 GB to share with
+# the web browser, so keep it small.
+gpu_mem=76
 
 # Enable I2C, SPI, and audio
 dtparam=i2c_arm=on
@@ -27,13 +28,26 @@ dtparam=audio=on
 # Automatically load overlays for detected cameras
 camera_auto_detect=1
 
-# Enable drivers for the Raspberry Pi 7" Touchscreen
+# Automatically load overlays for detected DSI displays
 #
-# This makes it possible to run Scenic out of the box with the popular
-# Raspberry Pi 7" Touchscreen. It appears to be harmless for non-touchscreen
-# users, but if not, let us know!
-dtoverlay=rpi-ft5406
-dtoverlay=rpi-backlight
+# This replaces the legacy firmware-driven rpi-ft5406 and rpi-backlight
+# overlays. Those don't work with KMS since the kernel owns the DSI port.
+display_auto_detect=1
+
+# Enable DRM VC4 V3D driver
+#
+# This is required for Weston and Cog. It gives /dev/dri/card0 and OpenGL ES
+# via Mesa's vc4 driver. The overlay sets CMA to 256 MB by default. Append
+# ",cma-128" or similar to change it.
+dtoverlay=vc4-kms-v3d
+max_framebuffers=2
+
+# Don't have the firmware create an initial video= setting in cmdline.txt.
+# Use the kernel's default instead.
+disable_fw_kms_setup=1
+
+# Disable compensation for displays with overscan
+disable_overscan=1
 
 # Comment this in or modify to enable OneWire
 # NOTE: check that the overlay that you specify is in the boot partition or

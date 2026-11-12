@@ -1,9 +1,9 @@
-defmodule NervesSystemRpi3.MixProject do
+defmodule KioskSystemRpi3.MixProject do
   use Mix.Project
 
-  @github_organization "nerves-project"
-  @app :nerves_system_rpi3
-  @source_url "https://github.com/#{@github_organization}/#{@app}"
+  @github_repo "ringvold/nerves_system_rpi3_kiosk"
+  @app :kiosk_system_rpi3
+  @source_url "https://github.com/#{@github_repo}"
   @version Path.join(__DIR__, "VERSION")
            |> File.read!()
            |> String.trim()
@@ -45,7 +45,7 @@ defmodule NervesSystemRpi3.MixProject do
     [
       type: :system,
       artifact_sites: [
-        {:github_releases, "#{@github_organization}/#{@app}"}
+        {:github_releases, @github_repo}
       ],
       artifact_checksum: true,
       build_runner_opts: build_runner_opts(),
@@ -80,7 +80,7 @@ defmodule NervesSystemRpi3.MixProject do
 
   defp description do
     """
-    Nerves System - Raspberry Pi 3B, 3B+, Zero 2W
+    Kiosk System - Raspberry Pi 3B, 3B+, Zero 2W
     """
   end
 
@@ -100,9 +100,7 @@ defmodule NervesSystemRpi3.MixProject do
       files: package_files(),
       licenses: ["GPL-2.0-only", "GPL-2.0-or-later"],
       links: %{
-        "GitHub" => @source_url,
-        "REUSE Compliance" =>
-          "https://api.reuse.software/info/github.com/nerves-project/nerves_system_rpi3"
+        "GitHub" => @source_url
       }
     ]
   end
@@ -138,13 +136,20 @@ defmodule NervesSystemRpi3.MixProject do
 
   defp build_runner_opts() do
     # Download source files first to get download errors right away.
-    [make_args: primary_site() ++ ["source", "all", "legal-info"]]
+    [make_args: primary_site() ++ parallel_jobs() ++ ["source", "all", "legal-info"]]
   end
 
   defp primary_site() do
     case System.get_env("BR2_PRIMARY_SITE") do
       nil -> []
       primary_site -> ["BR2_PRIMARY_SITE=#{primary_site}"]
+    end
+  end
+
+  defp parallel_jobs do
+    case System.get_env("PARALLEL_JOBS") do
+      nil -> []
+      count -> ["PARALLEL_JOBS=#{count}"]
     end
   end
 
